@@ -22,7 +22,7 @@ def token_required(f):
             return jsonify({'message': 'Token is missing!'}), 401
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-            g.user = data  # Store user info for use in routes if needed
+            g.user = data  
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired!'}), 401
         except jwt.InvalidTokenError:
@@ -119,7 +119,7 @@ def login_user():
     
 @app.route('/auth/logout', methods=['POST'])
 def logout_user():
-    # Implement logout logic here (e.g., invalidate session token)
+    
     return jsonify({'message': 'Logged out successfully'}), 200
 
 
