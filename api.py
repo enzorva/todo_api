@@ -3,6 +3,7 @@ import datetime
 import uuid
 import jwt
 import os
+import bcrypt
 from dotenv import load_dotenv
 from functools import wraps
 from flask import Flask, request, jsonify, g
@@ -87,9 +88,10 @@ def register_user():
     db = get_db()
     user_id = str(uuid.uuid4())
     now = datetime.datetime.now().isoformat()
+    hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
     db.execute('''
         INSERT INTO users (id, username, email, password_hash, created_at)
-        VALUES (?, ?, ?, ?, ?)''', (user_id, data['username'], data['email'], data['password_hash'], now)
+        VALUES (?, ?, ?, ?, ?)''', (user_id, data['username'], data['email'], hashed_password, now)
     )
     db.commit()
     return jsonify({'id': user_id, 'username': data['username'], 'email': data['email']}), 201
@@ -99,9 +101,9 @@ def login_user():
     data = request.get_json()
     db = get_db()
     user = db.execute('''
-        SELECT * FROM users WHERE username = ? AND password_hash = ?
-    ''', (data['username'], data['password_hash'])).fetchone()
-    if user:
+        SELECT * FROM users WHERE username = ?
+    ''', (data['username'],)).fetchone()
+    if user and bcrypt.checkpw(data['password'].encode('utf-8'), user['password_hash'].encode('utf-8')):
         payload = {
             "user_id": user['id'],
             "username": user['username'],
